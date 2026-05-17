@@ -263,18 +263,7 @@ LLM calls take 5–60 seconds and cost money. Most syntax errors in generated co
 CastFlow's iteration data is inherently append-only and session-scoped. JSON files provide zero-config persistence, easy debugging (just open the file), and simple backup. For source data (MySQL), the system already uses a proper database. Agent state doesn't need ACID transactions — it needs readability.
 </details>
 
----
 
-## Inspired by CastClaw
-
-CastFlow draws inspiration from [CastClaw](https://github.com/castclaw/castclaw) (USTC + Huawei joint project):
-
-- Monorepo structure (Bun + Turborepo)
-- Planner &rarr; Forecaster &rarr; Critic agent pipeline
-- Skill-based knowledge precipitation
-- Experiment reflection and budget controls
-
-**Key differences**: CastFlow is purpose-built for power load forecasting with MySQL integration, uses a self-iterating code patching loop (vs. experiment enumeration), and implements a three-layer memory system with RAG retrieval.
 
 ---
 
@@ -283,5 +272,5 @@ CastFlow draws inspiration from [CastClaw](https://github.com/castclaw/castclaw)
 </p>
 
 <p align="center">
-  <sub>MIT License &middot; CastFlow &copy; 2025</sub>
+  <sub>MIT License &middot; CastFlow &copy; 2025 XiaoNianGao564</sub>
 </p>
