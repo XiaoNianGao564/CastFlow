@@ -27,26 +27,9 @@ The system is production-deployed for **power load forecasting across 5 district
 
 ## Architecture Overview
 
-```
-                         CoordinatorAgent
-                        /        |         \
-                  PlannerAgent   |    ReActPlanner
-                 (temp=0.3)     |    (11 ReAct tools)
-                                |
-          +---------+----------+----------+----------+
-          |         |          |          |          |
-       DataAgent  CodeGen   Execution  Evaluation Analysis
-                  Agent      Agent      Agent     Agent
-                                                  |
-                                             PatchAgent
-                                          (LLM + fallback)
-                                                  |
-                                          ForecasterAgent
-                                          (iteration loop)
-                                                  |
-                                             CriticAgent
-                                             (final report)
-```
+<p align="center">
+  <img src="docs/architecture.svg" alt="CastFlow multi-agent architecture" width="680" />
+</p>
 
 **11 agents**, 4 orchestration modes, 31 prediction models, 3-layer memory system.
 
@@ -54,34 +37,9 @@ The system is production-deployed for **power load forecasting across 5 district
 
 The key differentiator is how CastFlow improves itself:
 
-```
-  Generate Python Code
-         |
-         v
-    Execute & Collect Results
-         |
-         v
-    Wait for Real Data (polls MySQL)
-         |
-         v
-    Calculate Accuracy (MAPE/MAE/RMSE)
-         |
-         v
-  +-- Accuracy Improved? --+
-  |           |             |
- YES         NO             |
-  |           |             |
-Save as      Analyze     Rollback
-new best     errors       to best
-  |       (LLM reasoning)|
-  |           |           |
-  |      Generate Patch  |
-  |    (minimal diff)    |
-  |           |           |
-  +-----------+-----------+
-              |
-         Repeat (up to N iterations)
-```
+<p align="center">
+  <img src="docs/patching-loop.svg" alt="CastFlow self-iterating patching loop" width="680" />
+</p>
 
 - **LLM generates patches**, not full rewrites — only parameters, preprocessing, or model logic are changed
 - **fallbackPatch**: deterministic local rules (regex-based parameter swaps) run first in **milliseconds** before any LLM call
