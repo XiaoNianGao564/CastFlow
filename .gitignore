@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.turbo/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+.api_key
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Runtime artifacts (generated during iterations)
+packages/api/generated_code/
+packages/api/memory/
+packages/api/rag_store/
+packages/api/skills/
+generated_code/
+memory/
+rag_store/
+
+# CastFlow local state
+.memory/
+.castflow/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+nul

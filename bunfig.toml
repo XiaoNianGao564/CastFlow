@@ -1,0 +1,3 @@
+[install]
+# 使用 bun 的 workspaces 协议
+# 保持与 CastClaw 一致的包管理器配置
