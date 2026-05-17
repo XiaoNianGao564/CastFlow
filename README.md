@@ -2,6 +2,10 @@
   <img src="docs/banner.png" alt="CastFlow Banner" width="100%" />
 </p>
 
+<p align="center">
+  <img src="docs/dashboard.png" alt="CastFlow Dashboard" width="100%" />
+</p>
+
 <h1 align="center">CastFlow</h1>
 
 <p align="center">
