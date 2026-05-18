@@ -51,10 +51,48 @@ uv pip install -e .
 cp .env.example .env
 # 编辑 .env 填入 DASHSCOPE_API_KEY
 
-# 4. 运行
-python run.py              # 默认 TC01 / 2026-01
-python run.py TC02 2026-02 # 指定区县/月份
+# 4.（推荐）启动 Chroma HTTP server（解决嵌入式模式在多线程下的兼容问题）
+docker compose up -d chromadb
+
+# 5. 运行
+python run.py              # 默认 耀州 / 2026-12
+python run.py 印王 2026-12 # 指定区县/月份
 ```
+
+> 不想用 Docker 也可以：保持 `.env` 里 `CHROMA_HTTP_HOST` 留空，会自动 fallback
+> 到本地 PersistentClient（在主 Agent 单线程场景下工作正常；多线程 eval 场景
+> 推荐 HTTP 模式，详见下面「Memory: Chroma HTTP server」一节）。
+
+## Memory: Chroma HTTP server
+
+CastFlow 的三层记忆（episodic / semantic）默认连 Docker 部署的 chromadb HTTP server，
+原因和真实踩过的坑：
+
+- chromadb 1.5.x 嵌入式模式在 LangGraph ToolNode 多线程 + 重复 `PersistentClient(path=...)`
+  场景下不稳，会抛 `AttributeError: 'RustBindingsAPI' object has no attribute 'bindings'`
+  或 `Could not connect to tenant default_tenant`，导致 eval 跑批时 memory 失败
+- chromadb 0.5.x 依赖 `chroma-hnswlib`，在 Windows 需要 MSVC 编译，开箱即用麻烦
+- HTTP 模式下 client 是纯 REST 封装，没有 Rust bindings 也没有 tenant bootstrap，
+  所有兼容 bug 直接绕过
+
+启动 / 关闭：
+
+```bash
+# 启动（首次会拉 chromadb/chroma:1.0.5 镜像，约 200MB）
+docker compose up -d chromadb
+
+# 状态 / 心跳
+docker compose ps
+curl http://127.0.0.1:8001/api/v2/heartbeat
+
+# 关闭（数据保留在 ./data/chroma_server/，下次启动自动恢复）
+docker compose down
+```
+
+`castflow/memory/chroma_compat.py` 同时保留了对嵌入式模式的兼容性 patch
+（`safe_persistent_client` 自动 ensure tenant + retry + clear cache），
+所以 `CHROMA_HTTP_HOST` 留空时仍可工作。
+
 
 ## Project Layout
 
