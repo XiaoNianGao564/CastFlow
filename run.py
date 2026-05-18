@@ -19,6 +19,7 @@ except Exception:
 
 from rich.console import Console
 from rich.panel import Panel
+from langchain_core.messages import HumanMessage
 
 from castflow.config import settings
 from castflow.graph.orchestrator import build_graph
@@ -55,8 +56,8 @@ def _print_message(msg) -> None:
 
 
 def main() -> None:
-    org = sys.argv[1] if len(sys.argv) > 1 else "TC01"
-    target_month = sys.argv[2] if len(sys.argv) > 2 else "2026-01"
+    org = sys.argv[1] if len(sys.argv) > 1 else "耀州"
+    target_month = sys.argv[2] if len(sys.argv) > 2 else "2026-12"
 
     if not settings.dashscope_api_key:
         console.print("[red]缺少 DASHSCOPE_API_KEY，请编辑 .env 后再运行[/]")
@@ -71,7 +72,15 @@ def main() -> None:
         "target_mape": settings.target_mape,
         "max_iterations": settings.max_iterations,
         "iteration_count": 0,
-        "messages": [],
+        "messages": [
+            HumanMessage(
+                content=(
+                    f"请预测【{org}】区 {target_month} 月的电力负荷（expect_type=1 区民用电），"
+                    f"目标 MAPE ≤ {settings.target_mape}%。"
+                    f"\n\n如果你不确定区县名是否正确，先调用 list_orgs 工具看可用区县列表。"
+                )
+            )
+        ],
         "iterations": [],
         "best_mape": 999.0,
         "best_code": "",
