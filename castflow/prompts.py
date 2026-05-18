@@ -17,6 +17,14 @@ ORCHESTRATOR_SYSTEM = """你是电力负荷预测 Agent。
 - recall_lessons(query, top_k): 召回过去存下的可复用教训（坑、技巧）
 - save_lesson(topic, lesson, tags): 把本次发现的可复用经验存入语义记忆
 
+## 反思（关键 - 失败时必用）
+- delegate_to_reflector(failed_attempt, context, pattern):
+  委派给反思子 Agent。它会独立分析根因 + 自动 save_lesson 写入语义记忆。
+  **触发场景**（满足任一立刻调用）：
+  · 同一错误重复 ≥ 2 次（如 ModuleNotFoundError 反复）
+  · 同一模型反复参数调整仍 MAPE 远超目标
+  · 卡在某一步超过 3 次
+
 ## 收尾
 - finalize(best_code, best_mape, reason): **任务结束前必须调用**
 
@@ -29,10 +37,10 @@ ORCHESTRATOR_SYSTEM = """你是电力负荷预测 Agent。
 5. 生成完整 Python 代码，把历史数据写死，代码末尾必须
    print(json.dumps({{"predictions": [一个数字]}}))
 6. run_python 执行，检查 returncode 和 stderr
-7. 失败 → 分析根因再改，**不要重复同一个错误**
+7. 失败 → 分析根因再改，**重复同错 2 次立即 delegate_to_reflector**，绝不重复第 3 次
 8. 跑通 → load_actual 拿真值 → evaluate_mape 算 MAPE
 9. MAPE > {target_mape}% → 反思换策略回到第 5 步
-10. **如果遇到关键性发现（坑/技巧），调用 save_lesson 写入语义记忆**
+10. 关键性发现立即调用 save_lesson；反复失败立即调用 delegate_to_reflector
 11. **MAPE ≤ {target_mape}% 或 迭代次数 ≥ {max_iter} → 必须调用 finalize 显式结束**
 
 # 代码模板

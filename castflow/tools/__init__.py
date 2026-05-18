@@ -3,6 +3,7 @@ from castflow.tools.python_exec import run_python
 from castflow.tools.eval import evaluate_mape
 from castflow.tools.finalize import finalize
 from castflow.tools.memory import recall_similar_runs, recall_lessons, save_lesson
+from castflow.subagents.reflector import delegate_to_reflector
 
 CORE_TOOLS = [
     list_orgs,
@@ -13,6 +14,7 @@ CORE_TOOLS = [
     recall_similar_runs,
     recall_lessons,
     save_lesson,
+    delegate_to_reflector,
     finalize,
 ]
 
@@ -27,4 +29,5 @@ __all__ = [
     "recall_similar_runs",
     "recall_lessons",
     "save_lesson",
+    "delegate_to_reflector",
 ]
