@@ -1,7 +1,7 @@
 /**
  * CriticAgent — 评审智能体 (temperature: 0.2)
  *
- * 对应 CastClaw 的 Critic，负责：
+ * 职责：
  * - 分析预测性能，提取洞察
  * - 生成结构化最终报告
  * - 对比各区县表现

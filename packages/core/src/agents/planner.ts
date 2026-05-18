@@ -1,7 +1,7 @@
 /**
  * PlannerAgent — 规划智能体 (temperature: 0.3)
  *
- * 对应 CastClaw 的 Planner，负责：
+ * 职责：
  * - 数据诊断与完整性检查
  * - 智能模型选择（基于数据特征）
  * - 初始预测代码生成

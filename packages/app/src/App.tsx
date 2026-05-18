@@ -1,6 +1,5 @@
 /**
  * CastFlow 前端主应用
- * 借鉴 CastClaw 的 app/src/ 结构
  */
 
 import { Component, createSignal, onMount, onCleanup } from "solid-js"
@@ -158,7 +157,7 @@ const App: Component = () => {
 
   return (
     <div class="min-h-screen bg-gray-50">
-      {/* 顶部导航 - 类似 CastClaw 的 CLI/TUI UI 风格 */}
+      {/* 顶部导航 */}
       <header class="bg-white border-b border-gray-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-3">

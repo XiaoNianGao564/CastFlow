@@ -1,7 +1,7 @@
 /**
  * CoordinatorAgent - 总控编排智能体
  *
- * 对应 CastClaw 的 Planner 角色，管理完整的自优化闭环：
+ * 作为顶层 Planner 角色，管理完整的自优化闭环：
  * 数据 → 代码生成 → 执行预测 → 等待真实数据 → 评估 → 分析 → 补丁 → 验证 → 迭代
  */
 
@@ -572,7 +572,7 @@ export class CoordinatorAgent {
   }
 
   // ================================================================
-  // ReAct 多智能体调度循环（对应 CastClaw 的 Planner Agent）
+  // ReAct 多智能体调度循环
   // 通过 Thought→Action→Observation 动态决策下一步
   // ================================================================
   async reactLoop(year = 2026, expectType = 1) {
@@ -625,7 +625,7 @@ export class CoordinatorAgent {
     return this.buildSummary()
   }
 
-  /** 构建 ReAct 工具列表（11 个，对应 CastClaw 的 tool-calling） */
+  /** 构建 ReAct 工具列表（11 个 tool-calling 能力） */
   private buildReactTools(): ReActTool[] {
     const emit = this.emit.bind(this)
     const self = this
@@ -857,7 +857,7 @@ export class CoordinatorAgent {
   }
 
   // ================================================================
-  // 3 独立 Agent 管道（对应 CastClaw 的 Planner→Forecaster→Critic）
+  // 3 独立 Agent 管道（Planner → Forecaster → Critic）
   // ================================================================
   async run3AgentPipeline(year = 2026, expectType = 1) {
     this._abort = false

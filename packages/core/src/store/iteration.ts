@@ -1,6 +1,5 @@
 /**
  * 迭代记录存储器（JSON 文件持久化）
- * 对应 CastClaw 的 memory/ 目录 + session 表
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, readdirSync } from "fs"

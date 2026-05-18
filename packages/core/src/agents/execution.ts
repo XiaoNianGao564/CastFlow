@@ -1,6 +1,5 @@
 /**
  * ExecutionAgent - 代码执行智能体
- * 对应 CastClaw 的 tool/bash + Python runner
  *
  * 通过 subprocess 在隔离的 Python 进程中执行预测代码，
  * 捕获输出、错误、执行时间。

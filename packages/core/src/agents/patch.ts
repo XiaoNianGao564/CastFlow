@@ -3,8 +3,6 @@
  *
  * 职责：LLM 生成最小代码补丁（不重写全文），
  * 只修改关键参数、数据预处理逻辑或模型结构
- *
- * 对应 CastClaw 的 apply_patch/edit 工具
  */
 
 import { LLMClient } from "../llm/client"

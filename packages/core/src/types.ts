@@ -1,6 +1,6 @@
 /**
  * CastFlow 核心类型定义
- * 借鉴 CastClaw 的 schema 模式，用 Zod 定义所有数据结构
+ * 用 Zod 定义所有数据结构
  */
 
 import { z } from "zod"
@@ -29,7 +29,7 @@ export const DataPointSchema = z.object({
 export type DataPoint = z.infer<typeof DataPointSchema>
 
 // ============================================================
-// 评估指标（对应 CastClaw evaluator 的 metrics）
+// 评估指标
 // ============================================================
 export const EvaluationMetricsSchema = z.object({
   mape: z.number(),

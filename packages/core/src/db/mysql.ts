@@ -1,8 +1,6 @@
 /**
  * MySQL 数据库读取器
  * 通过 Python 子进程安全执行 SQL 查询
- *
- * 对应 CastClaw 的 storage/ 数据库层 + tool/analyze_dataset
  */
 
 import { execSync } from "child_process"

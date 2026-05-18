@@ -1,6 +1,6 @@
 {
   "name": "castflow",
-  "description": "CastFlow - 自迭代预测智能体平台 (基于 CastClaw 架构)",
+  "description": "CastFlow - 自迭代多智能体预测平台",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.11",

@@ -1,6 +1,5 @@
 /**
  * DataAgent - 数据获取与监控智能体
- * 对应 CastClaw 的 tool/analyze_dataset
  */
 
 import { DBReader } from "../db/mysql"

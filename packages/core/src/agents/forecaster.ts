@@ -1,7 +1,7 @@
 /**
  * ForecasterAgent — 预测迭代智能体 (temperature: 0.6)
  *
- * 对应 CastClaw 的 Forecaster，负责：
+ * 职责：
  * - 执行预测代码
  * - 评估预测准确率
  * - 误差深度分析

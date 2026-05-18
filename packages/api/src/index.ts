@@ -410,7 +410,7 @@ app.post("/api/forecast/parallel-start", async (c) => {
 })
 
 // ================================================================
-// ReAct 多智能体调度（对应 CastClaw 的 Planner）
+// ReAct 多智能体调度
 // ================================================================
 app.post("/api/forecast/react-start", async (c) => {
   const body = await c.req.json().catch(() => ({}))

@@ -1,7 +1,6 @@
 /**
  * ReActPlanner - 多智能体 ReAct 调度器
  *
- * 对应 CastClaw 的 Planner Agent（LangChain ReAct），
  * 通过 Thought → Action → Observation 循环驱动 LLM 动态决策。
  *
  * 每个工具封装一条 Agent 能力（load_data, execute_code, analyze 等），

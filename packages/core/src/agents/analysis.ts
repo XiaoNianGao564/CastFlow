@@ -3,8 +3,6 @@
  *
  * 职责：调用 LLM 分析预测误差的根本原因，
  * 对比预测曲线 vs 真实曲线 vs 历史模式，输出优化方向
- *
- * 对应 CastClaw 的 forecast_reflect 工具
  */
 
 import { LLMClient } from "../llm/client"

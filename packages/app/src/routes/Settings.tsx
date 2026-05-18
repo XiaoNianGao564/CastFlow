@@ -230,7 +230,7 @@ const Settings: Component = () => {
 
       {/* 关于 */}
       <div class="bg-white rounded-xl border border-gray-200 p-6 text-center text-sm text-gray-400">
-        <p>CastFlow v0.1 — 基于 CastClaw 多智能体架构</p>
+        <p>CastFlow v0.1 — 自迭代多智能体预测架构</p>
         <p class="mt-1">自迭代预测优化闭环 | 数据源: MySQL sxfhyc11</p>
       </div>
     </div>

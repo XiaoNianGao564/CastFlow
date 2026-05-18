@@ -1,6 +1,5 @@
 /**
  * CodeGenAgent - LLM 代码生成智能体
- * 对应 CastClaw 的 Forecaster Agent + tool/generate_model
  *
  * 职责：调用 LLM 从数据库结构生成初始预测代码
  * 模型不固定为 ARIMA/SARIMAX，由 LLM 自行选择
