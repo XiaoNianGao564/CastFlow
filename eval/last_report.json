@@ -1,7 +1,7 @@
 [
   {
     "case": "case_yaozhou_baseline",
-    "actual_mape": 15.604,
+    "actual_mape": 26.346,
     "tool_seq": [
       "recall_similar_runs",
       "list_orgs",
@@ -13,10 +13,10 @@
       "delegate_to_coder",
       "finalize"
     ],
-    "elapsed_sec": 277.2,
+    "elapsed_sec": 229.6,
     "objective": {
       "score": 0,
-      "reason": "MAPE 15.60% > threshold 5.0%"
+      "reason": "MAPE 26.35% > threshold 5.0%"
     },
     "llm": {
       "workflow_compliance": "-",

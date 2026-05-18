@@ -21,5 +21,9 @@ class Settings(BaseModel):
     mysql_password: str = os.getenv("MYSQL_PASSWORD", "root")
     mysql_db: str = os.getenv("MYSQL_DB", "sxfhyc11")
 
+    # Chroma HTTP server (空字符串 = 用本地 PersistentClient)
+    chroma_http_host: str = os.getenv("CHROMA_HTTP_HOST", "")
+    chroma_http_port: int = int(os.getenv("CHROMA_HTTP_PORT", "8001"))
+
 
 settings = Settings()

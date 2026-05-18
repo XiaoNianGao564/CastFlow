@@ -10,26 +10,22 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 
-import chromadb
-
+from castflow.config import settings
+from castflow.memory.chroma_compat import safe_http_client, safe_persistent_client
 from castflow.memory.embedding import DashScopeEmbedding
 
 _DATA_DIR = Path("data/chroma")
 
 
 def _make_client():
-    """构造 PersistentClient，失败时返回 None（让上层走 graceful 降级）。
+    """优先 HttpClient（连 Docker server），无配置则 fallback 到本地 PersistentClient。
 
-    chromadb 1.x 的 RustBindingsAPI 在某些场景（如 eval 多 case 反复
-    初始化）会触发 _release_system 抛 AttributeError 'bindings'。
-    我们捕获后返回 None，memory 临时不可用，主流程继续。
+    HttpClient 模式（推荐）: 在 .env 设置 CHROMA_HTTP_HOST，避开 chromadb 1.5+
+    嵌入式模式在 LangGraph ToolNode 多线程下的边界 bug。
     """
-    _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    try:
-        return chromadb.PersistentClient(path=str(_DATA_DIR))
-    except Exception as e:  # noqa: BLE001
-        print(f"[memory] chromadb client init failed: {e}")
-        return None
+    if settings.chroma_http_host:
+        return safe_http_client(settings.chroma_http_host, settings.chroma_http_port)
+    return safe_persistent_client(_DATA_DIR)
 
 
 class EpisodicMemory:
@@ -128,7 +124,8 @@ _episodic: EpisodicMemory | None = None
 
 
 def get_episodic() -> EpisodicMemory:
+    """单例；上次 init 失败则下次重试。"""
     global _episodic
-    if _episodic is None:
+    if _episodic is None or not _episodic.available:
         _episodic = EpisodicMemory()
     return _episodic

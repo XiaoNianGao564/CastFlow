@@ -84,7 +84,8 @@ _semantic: SemanticMemory | None = None
 
 
 def get_semantic() -> SemanticMemory:
+    """单例；上次 init 失败则下次重试。"""
     global _semantic
-    if _semantic is None:
+    if _semantic is None or not _semantic.available:
         _semantic = SemanticMemory()
     return _semantic

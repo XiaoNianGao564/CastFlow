@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  chromadb:
+    image: chromadb/chroma:1.0.5
+    container_name: castflow-chroma
+    restart: unless-stopped
+    volumes:
+      - ./data/chroma_server:/data
+    ports:
+      - "8001:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/data
+      - ANONYMIZED_TELEMETRY=FALSE
