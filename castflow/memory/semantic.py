@@ -6,40 +6,57 @@
 from __future__ import annotations
 
 import uuid
-from pathlib import Path
-
-import chromadb
 
 from castflow.memory.embedding import DashScopeEmbedding
-
-_DATA_DIR = Path("data/chroma")
+from castflow.memory.episodic import _make_client
 
 
 class SemanticMemory:
     def __init__(self) -> None:
-        _DATA_DIR.mkdir(parents=True, exist_ok=True)
-        self._client = chromadb.PersistentClient(path=str(_DATA_DIR))
-        self._col = self._client.get_or_create_collection(
-            name="semantic",
-            embedding_function=DashScopeEmbedding(),
-            metadata={"hnsw:space": "cosine"},
-        )
+        self._client = _make_client()
+        self._col = None
+        if self._client is not None:
+            try:
+                self._col = self._client.get_or_create_collection(
+                    name="semantic",
+                    embedding_function=DashScopeEmbedding(),
+                    metadata={"hnsw:space": "cosine"},
+                )
+            except Exception as e:  # noqa: BLE001
+                print(f"[memory] semantic collection init failed: {e}")
+                self._col = None
+
+    @property
+    def available(self) -> bool:
+        return self._col is not None
 
     def add(self, topic: str, lesson: str, tags: list[str] | None = None) -> str:
+        if not self.available:
+            return ""
         rid = str(uuid.uuid4())
         doc = f"主题: {topic}\n经验: {lesson}"
-        self._col.add(
-            ids=[rid],
-            documents=[doc],
-            metadatas=[{"topic": topic, "tags": ",".join(tags or [])}],
-        )
+        try:
+            self._col.add(
+                ids=[rid],
+                documents=[doc],
+                metadatas=[{"topic": topic, "tags": ",".join(tags or [])}],
+            )
+        except Exception as e:  # noqa: BLE001
+            print(f"[memory] semantic.add failed: {e}")
+            return ""
         return rid
 
     def recall(self, query: str, top_k: int = 3) -> list[dict]:
-        if self._col.count() == 0:
+        if not self.available:
             return []
-        n = min(top_k, self._col.count())
-        res = self._col.query(query_texts=[query], n_results=n)
+        try:
+            if self._col.count() == 0:
+                return []
+            n = min(top_k, self._col.count())
+            res = self._col.query(query_texts=[query], n_results=n)
+        except Exception as e:  # noqa: BLE001
+            print(f"[memory] semantic.recall failed: {e}")
+            return []
         out: list[dict] = []
         for i, mid in enumerate(res["ids"][0]):
             meta = res["metadatas"][0][i] if res.get("metadatas") else {}
@@ -55,7 +72,12 @@ class SemanticMemory:
         return out
 
     def count(self) -> int:
-        return self._col.count()
+        if not self.available:
+            return 0
+        try:
+            return self._col.count()
+        except Exception:  # noqa: BLE001
+            return 0
 
 
 _semantic: SemanticMemory | None = None

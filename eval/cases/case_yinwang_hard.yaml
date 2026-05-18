@@ -1,0 +1,9 @@
+org: 印王
+target_month: 2026-12
+target_mape: 10.0
+max_iterations: 6
+description: |
+  印王 2026-12 是难 case，B4 跑出 MAPE 44.94%（数据 fluctuation 大）。
+  验收阈值放宽到 10%，主要看 Agent 是否能调用 delegate_to_coder + 不重复同一错误。
+expected:
+  mape_max: 30.0

@@ -1,0 +1,9 @@
+org: 耀州
+target_month: 2026-12
+target_mape: 5.0
+max_iterations: 6
+description: |
+  耀州 2026-12 是基线 case，B3 验证里 SARIMAX 跑出 MAPE 2.88%，
+  应该长期稳定在 5% 以内。
+expected:
+  mape_max: 5.0

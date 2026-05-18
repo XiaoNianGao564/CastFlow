@@ -1,0 +1,8 @@
+org: 宜君
+target_month: 2026-12
+target_mape: 5.0
+max_iterations: 6
+description: |
+  宜君 是另一个采样 case，验证主流程对不同区县的泛化。
+expected:
+  mape_max: 15.0
