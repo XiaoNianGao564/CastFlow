@@ -23,6 +23,7 @@ from langchain_core.messages import HumanMessage
 
 from castflow.config import settings
 from castflow.graph.orchestrator import build_graph
+from castflow.tracing import maybe_get_langfuse_callback, trace_metadata
 
 # legacy_windows=False 关闭 Win32 控制台 API 直写，避免 GBK 编码崩溃
 console = Console(legacy_windows=False, force_terminal=True)
@@ -90,6 +91,15 @@ def main() -> None:
         "configurable": {"thread_id": f"{org}-{target_month}"},
         "recursion_limit": 50,
     }
+
+    # B5: Langfuse trace（缺 key 时 graceful 降级，不影响主流程）
+    lf_handler = maybe_get_langfuse_callback()
+    if lf_handler is not None:
+        config["callbacks"] = [lf_handler]
+        config.update(trace_metadata(org, target_month))
+        console.print("[dim]→ Langfuse trace enabled[/]")
+    else:
+        console.print("[dim]→ Langfuse trace disabled (set LANGFUSE_* in .env to enable)[/]")
 
     console.rule(f"[bold]CastFlow Agent · {org} / {target_month}[/]")
     seen = 0

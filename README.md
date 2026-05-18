@@ -156,8 +156,8 @@ python -m scripts.test_mcp
 - [x] **Stage B1** — 接真 MySQL sxfhyc11，修复数据泄漏
 - [x] **Stage B2** — Chroma 三层记忆 (working/episodic/semantic) + force_finalize
 - [x] **Stage B3** — Reflexion 反思子 Agent (subagent-as-tool)
-- [ ] **Stage B4** — Coder 子 Agent（subagent-as-tool）
-- [ ] **Stage B5** — Langfuse 全链路 trace
+- [x] **Stage B4** — Coder 子 Agent（subagent-as-tool）
+- [x] **Stage B5** — Langfuse 全链路 trace（graceful 降级）
 - [ ] **Stage B6** — DeepEval 10 case + LLM-as-Judge
 - [x] **Stage B7** — MCP Server (Anthropic Model Context Protocol)
 - [ ] **Stage B8** — FastAPI SSE
