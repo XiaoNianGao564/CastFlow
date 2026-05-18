@@ -158,10 +158,37 @@ python -m scripts.test_mcp
 - [x] **Stage B3** — Reflexion 反思子 Agent (subagent-as-tool)
 - [x] **Stage B4** — Coder 子 Agent（subagent-as-tool）
 - [x] **Stage B5** — Langfuse 全链路 trace（graceful 降级）
-- [ ] **Stage B6** — DeepEval 10 case + LLM-as-Judge
+- [x] **Stage B6** — DeepEval eval 框架 + Memory graceful 降级
 - [x] **Stage B7** — MCP Server (Anthropic Model Context Protocol)
-- [ ] **Stage B8** — FastAPI SSE
-- [ ] **Stage B9** — Streamlit 演示页
+- [x] **Stage B8** — FastAPI SSE 流式 API
+- [x] **Stage B9** — Streamlit 演示 UI
+
+## Run the demo (B8 + B9)
+
+两个终端：
+
+```bash
+# Terminal 1：起 FastAPI 后端
+.venv\Scripts\activate
+uvicorn api.server:app --host 0.0.0.0 --port 8000
+
+# Terminal 2：起 Streamlit UI
+.venv\Scripts\activate
+streamlit run streamlit_app.py
+```
+
+浏览器打开 http://localhost:8501，左侧选区县和月份，点「运行 Agent」
+就能实时看到 Agent 每一步工具调用和结果。
+
+API 文档（Swagger UI）：http://localhost:8000/docs
+
+主要端点：
+
+| 端点 | 方法 | 用途 |
+|---|---|---|
+| `/health` | GET | 健康检查 |
+| `/forecast/run` | POST | 阻塞式跑完返回最终摘要（CI/自动化） |
+| `/forecast/stream` | POST | SSE 流式，每个工具调用/返回都推一条事件 |
 
 ## License
 
