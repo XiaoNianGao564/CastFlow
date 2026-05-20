@@ -2,10 +2,13 @@
 所有工具都做 try/except 兜底：chromadb 内部失败时返回空结果而不是把主流程拉崩。"""
 from __future__ import annotations
 
+import os
+
 from langchain_core.tools import tool
 
 from castflow.memory.episodic import get_episodic
 from castflow.memory.semantic import get_semantic
+from castflow.tools.schema import tool_error, tool_success
 
 
 @tool
@@ -18,17 +21,38 @@ def recall_similar_runs(query: str, top_k: int = 5) -> dict:
         top_k: 返回前几条
     """
     try:
+        if os.environ.get("CASTFLOW_EVAL_MEMORY_ABLATION") == "1":
+            payload = {"found": 0, "total_in_memory": 0, "runs": [], "note": "memory ablation enabled"}
+            return tool_success(
+                "记忆系统已关闭。",
+                data=payload,
+                next_action="内存恢复后再重试。",
+                **payload,
+            )
         eps = get_episodic()
         if not eps.available:
-            return {"found": 0, "total_in_memory": 0, "runs": [], "note": "memory disabled"}
+            payload = {"found": 0, "total_in_memory": 0, "runs": [], "note": "memory disabled"}
+            return tool_success(
+                "记忆不可用，返回空历史 run。",
+                data=payload,
+                next_action="继续使用当前数据预测。",
+                **payload,
+            )
         results = eps.recall(query, top_k=top_k)
-        return {
+        payload = {
             "found": len(results),
             "total_in_memory": eps.count(),
             "runs": results,
         }
+        return tool_success(
+            f"召回 {len(results)} 条相似历史 run。",
+            data=payload,
+            next_action="参考历史 run 的模型和误差，继续生成候选。",
+            **payload,
+        )
     except Exception as e:  # noqa: BLE001
-        return {"found": 0, "total_in_memory": 0, "runs": [], "error": str(e)}
+        payload = {"found": 0, "total_in_memory": 0, "runs": []}
+        return tool_error("召回历史 run 失败，返回空结果。", str(e), data=payload, **payload)
 
 
 @tool
@@ -41,17 +65,38 @@ def recall_lessons(query: str, top_k: int = 3) -> dict:
         top_k: 返回前几条
     """
     try:
+        if os.environ.get("CASTFLOW_EVAL_MEMORY_ABLATION") == "1":
+            payload = {"found": 0, "total_in_memory": 0, "lessons": [], "note": "memory ablation enabled"}
+            return tool_success(
+                "记忆系统已关闭。",
+                data=payload,
+                next_action="内存恢复后再重试。",
+                **payload,
+            )
         sem = get_semantic()
         if not sem.available:
-            return {"found": 0, "total_in_memory": 0, "lessons": [], "note": "memory disabled"}
+            payload = {"found": 0, "total_in_memory": 0, "lessons": [], "note": "memory disabled"}
+            return tool_success(
+                "记忆不可用，返回空经验教训。",
+                data=payload,
+                next_action="继续使用当前数据预测。",
+                **payload,
+            )
         results = sem.recall(query, top_k=top_k)
-        return {
+        payload = {
             "found": len(results),
             "total_in_memory": sem.count(),
             "lessons": results,
         }
+        return tool_success(
+            f"召回 {len(results)} 条经验教训。",
+            data=payload,
+            next_action="把 lesson 应用到当前预测代码或避免已知坑。",
+            **payload,
+        )
     except Exception as e:  # noqa: BLE001
-        return {"found": 0, "total_in_memory": 0, "lessons": [], "error": str(e)}
+        payload = {"found": 0, "total_in_memory": 0, "lessons": []}
+        return tool_error("召回经验教训失败，返回空结果。", str(e), data=payload, **payload)
 
 
 @tool
@@ -67,8 +112,21 @@ def save_lesson(topic: str, lesson: str, tags: list[str] | None = None) -> dict:
     try:
         sem = get_semantic()
         if not sem.available:
-            return {"saved": False, "note": "memory disabled"}
+            payload = {"saved": False, "note": "memory disabled"}
+            return tool_success(
+                "语义记忆不可用，未保存 lesson。",
+                data=payload,
+                next_action="继续当前流程，不阻塞预测。",
+                **payload,
+            )
         rid = sem.add(topic=topic, lesson=lesson, tags=tags)
-        return {"saved": bool(rid), "id": rid, "total": sem.count()}
+        payload = {"saved": bool(rid), "id": rid, "total": sem.count()}
+        return tool_success(
+            "lesson 已保存。" if rid else "lesson 未保存。",
+            data=payload,
+            next_action="未来相似任务可通过 recall_lessons 召回。",
+            **payload,
+        )
     except Exception as e:  # noqa: BLE001
-        return {"saved": False, "error": str(e)}
+        payload = {"saved": False}
+        return tool_error("保存 lesson 失败。", str(e), data=payload, **payload)

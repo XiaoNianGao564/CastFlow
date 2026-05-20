@@ -8,10 +8,25 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
-data/chroma/
-data/chroma_server/
-data/checkpoints/
+data/
 generated_code/
+*.log
+
+# Node
+node_modules/
+package-lock.json
+package.json
+
+# Output / monitor files
+monitor_*
+run_*.txt
+
+# Test artifacts
+test_screenshots/
+test_e2e_*
+
+# Windows
+*.bat
 
 .DS_Store
 Thumbs.db

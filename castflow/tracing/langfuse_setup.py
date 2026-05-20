@@ -56,3 +56,24 @@ def trace_metadata(org: str, target_month: str) -> dict:
             "stage": "B5",
         },
     }
+
+
+def get_langfuse_client():
+    """返回 Langfuse 客户端实例（用于 dashboard 查询 traces/generations）。
+
+    未配置时返回 None。
+    """
+    pub = os.getenv("LANGFUSE_PUBLIC_KEY", "").strip()
+    sec = os.getenv("LANGFUSE_SECRET_KEY", "").strip()
+    if not pub or not sec:
+        return None
+    try:
+        from langfuse import Langfuse
+        return Langfuse(
+            public_key=pub,
+            secret_key=sec,
+            host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
+        )
+    except Exception as e:
+        print(f"[langfuse] client init failed: {e}")
+        return None

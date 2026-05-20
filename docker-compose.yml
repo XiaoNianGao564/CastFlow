@@ -13,3 +13,58 @@ services:
       - IS_PERSISTENT=TRUE
       - PERSIST_DIRECTORY=/data
       - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - castflow-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: castflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: castflow_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - castflow-net
+
+  castflow:
+    build: .
+    image: castflow:latest
+    container_name: castflow-app
+    restart: unless-stopped
+    depends_on:
+      chromadb:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    environment:
+      # 容器内服务发现用服务名
+      - CHROMA_HTTP_HOST=chromadb
+      - CHROMA_HTTP_PORT=8000
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=castflow_db
+      - USE_REAL_DB=false
+      # API Key 从宿主机 .env 传进来
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-qwen3.6-flash}
+      - LLM_MODEL_SUBAGENT=${LLM_MODEL_SUBAGENT:-qwen3.6-flash}
+    networks:
+      - castflow-net
+
+networks:
+  castflow-net:
+    driver: bridge

@@ -47,9 +47,9 @@ pip install uv
 uv venv
 uv pip install -e .
 
-# 3. 配置 API key
+# 3. 配置（见下方 ⚙️ Configuration 章节）
 cp .env.example .env
-# 编辑 .env 填入 DASHSCOPE_API_KEY
+# 编辑 .env 填入 DASHSCOPE_API_KEY（必填）和数据库信息（按需）
 
 # 4.（推荐）启动 Chroma HTTP server（解决嵌入式模式在多线程下的兼容问题）
 docker compose up -d chromadb
@@ -62,6 +62,67 @@ python run.py 印王 2026-12 # 指定区县/月份
 > 不想用 Docker 也可以：保持 `.env` 里 `CHROMA_HTTP_HOST` 留空，会自动 fallback
 > 到本地 PersistentClient（在主 Agent 单线程场景下工作正常；多线程 eval 场景
 > 推荐 HTTP 模式，详见下面「Memory: Chroma HTTP server」一节）。
+
+---
+
+## ⚙️ Configuration — 在哪里填写 Key 和数据库配置
+
+CastFlow 所有配置通过 `.env` 文件管理。配置模板见项目根目录的 `.env.example`。
+
+### 必填配置
+
+| 变量 | 说明 | 在哪里获取/填写 |
+|------|------|----------------|
+| `DASHSCOPE_API_KEY` | 🔴 **必填** — 通义千问 API Key | [DashScope 控制台](https://dashscope.console.aliyun.com/apiKey) → 创建 API Key → 复制 `sk-` 开头的值填入 |
+| `LLM_MODEL` | 主 Agent 模型 | 推荐保持 `qwen3.6-flash`，也可改为 `qwen-max` / `qwen-plus` |
+| `LLM_MODEL_SUBAGENT` | 子 Agent 模型 | 同上 |
+
+### 数据库配置（按需）
+
+| 变量 | 说明 | 何时需要修改 |
+|------|------|------------|
+| `MYSQL_HOST` | MySQL 主机地址 | 本地开发：`127.0.0.1`；Docker 部署：`mysql`（服务名） |
+| `MYSQL_PORT` | MySQL 端口 | 本地开发：`3306`；Docker 部署：`3306`（容器内端口） |
+| `MYSQL_USER` / `MYSQL_PASSWORD` | 数据库账号密码 | 替换为你的数据库凭据 |
+| `MYSQL_DB` | 数据库名 | 替换为你的实际库名 |
+| `USE_REAL_DB` | 是否连接真实数据库 | `false` = 使用内置模拟数据；`true` = 连接真实 MySQL |
+
+### Docker 部署特别注意
+
+`docker-compose.yml` 中的 `castflow` 服务会从宿主机 `.env` 读取 `DASHSCOPE_API_KEY`。
+容器内 MySQL/Chroma 的服务地址已预设为容器服务名，通常无需修改。
+详见 [`DOCKER_DEPLOY.md`](./DOCKER_DEPLOY.md)。
+
+### 可选配置
+
+| 变量 | 说明 |
+|------|------|
+| `CHROMA_HTTP_HOST` | Chroma 向量库地址（Docker 部署填 `chromadb`） |
+| `LANGFUSE_*` | 全链路 trace（可选，留空关闭） |
+| `MCP_ENABLED` | 启用 MCP 工具加载 |
+| `SCHEDULER_*` | 轮询调度器（真实值到达自动触发预测） |
+
+> ⚠️ **不要将你的 `.env` 文件提交到 Git！** `.env` 已在 `.gitignore` 中，只需复制 `.env.example` 并填入你的值即可。
+
+---
+
+## 🖼️ 运行效果
+
+以下截图来自 CastFlow 在铜川市电力负荷预测任务中的真实运行记录。
+
+### 1. 数据准备 — Agent 自动加载历史、搜索知识库
+![数据准备](docs/screenshots/01-data-preparation.png)
+
+### 2. 模型评估 — Coder/Verifier/Refiner 多智能体协同
+![模型评估](docs/screenshots/02-model-evaluation.png)
+
+### 3. 最佳结果 — MAPE 2.42% 达标，自动保存
+![最优结果](docs/screenshots/03-best-result.png)
+
+### 4. 完整仪表盘 — 审批门控、趋势图、预测 vs 真实对比
+![完整仪表盘](docs/screenshots/04-full-dashboard.png)
+
+---
 
 ## Memory: Chroma HTTP server
 
@@ -93,6 +154,21 @@ docker compose down
 （`safe_persistent_client` 自动 ensure tenant + retry + clear cache），
 所以 `CHROMA_HTTP_HOST` 留空时仍可工作。
 
+## Document RAG: Knowledge Base
+
+CastFlow 现在除了 Agent 记忆，还补了一层**文档知识库 RAG**：
+
+- `docs/knowledge/` 放稳定业务文档
+- `ingest_knowledge_docs()` 把文档导入 Chroma `knowledge_docs` collection
+- `search_knowledge_docs()` 在选模型前检索数据口径、建模规则、评估规范
+- 该层和 episodic / semantic memory 分开，避免把“业务文档”与“历史经验”混在一起
+
+建议放入的文档类型：
+
+- 数据口径说明
+- 指标定义和评估规则
+- 建模策略约束
+- 常见失败模式和处理原则
 
 ## Project Layout
 
@@ -110,11 +186,13 @@ castflow/
 │   ├── python_exec.py   run_python (subprocess + timeout)
 │   ├── eval.py          evaluate_mape
 │   ├── memory.py        recall_similar_runs / recall_lessons / save_lesson
+│   ├── knowledge.py     ingest_knowledge_docs / search_knowledge_docs
 │   ├── mcp_loader.py    通过 langchain-mcp-adapters 加载 MCP 工具
 │   └── finalize.py      finalize
 ├── memory/
 │   ├── episodic.py      历次 run 向量库（Chroma）
 │   ├── semantic.py      lesson 向量库（Chroma）
+│   ├── knowledge.py     文档知识库（Chroma）
 │   └── embedding.py     DashScope text-embedding-v2
 ├── subagents/
 │   └── reflector.py     Reflexion 反思子 Agent
@@ -158,7 +236,7 @@ python -m scripts.test_mcp
 # 期望输出:
 #   ===> 加载到 3 个 MCP 工具
 #   ===> 远程调用 list_orgs() 返回 5 个区县
-#   ===> MCP 端到端 smoke test 通过 ✅
+#   ===> MCP 端到端 smoke test 通过
 ```
 
 ### 接入 Claude Desktop
@@ -169,16 +247,16 @@ python -m scripts.test_mcp
 {
   "mcpServers": {
     "castflow-data": {
-      "command": "C:/Users/17166/Desktop/CastFlow/.venv/Scripts/python.exe",
+      "command": "/path/to/CastFlow/.venv/Scripts/python.exe",
       "args": ["-m", "mcp_servers.castflow_data"],
-      "cwd": "C:/Users/17166/Desktop/CastFlow",
+      "cwd": "/path/to/CastFlow",
       "env": {
         "DASHSCOPE_API_KEY": "sk-...",
         "USE_REAL_DB": "true",
         "MYSQL_HOST": "127.0.0.1",
         "MYSQL_USER": "root",
         "MYSQL_PASSWORD": "root",
-        "MYSQL_DB": "sxfhyc11"
+        "MYSQL_DB": "castflow_db"
       }
     }
   }
@@ -191,7 +269,7 @@ python -m scripts.test_mcp
 ## Roadmap
 
 - [x] **Stage A · MVP** — LangGraph 主图 + 5 个工具 + MemorySaver + CLI
-- [x] **Stage B1** — 接真 MySQL sxfhyc11，修复数据泄漏
+- [x] **Stage B1** — 接真 MySQL，修复数据泄漏
 - [x] **Stage B2** — Chroma 三层记忆 (working/episodic/semantic) + force_finalize
 - [x] **Stage B3** — Reflexion 反思子 Agent (subagent-as-tool)
 - [x] **Stage B4** — Coder 子 Agent（subagent-as-tool）
@@ -215,8 +293,13 @@ uvicorn api.server:app --host 0.0.0.0 --port 8000
 streamlit run streamlit_app.py
 ```
 
-浏览器打开 http://localhost:8501，左侧选区县和月份，点「运行 Agent」
-就能实时看到 Agent 每一步工具调用和结果。
+浏览器打开 http://localhost:8501，左侧配置区县、目标月和自然语言任务，点「启动交互式 Agent」。
+页面会展示：
+
+- 智能体推理日志：任务理解、工具调度、模型选择、Verifier/Reflector 摘要
+- 人工审批区：对高风险动作如 `run_python` / `finalize` 做批准或拒绝
+- 底部人机对话区：运行中输入自然语言反馈、暂停、继续、重新规划、终止
+- 可视化结果区：候选模型对比、MAPE/MAE/RMSE/bias 趋势、最终代码
 
 API 文档（Swagger UI）：http://localhost:8000/docs
 
@@ -225,8 +308,15 @@ API 文档（Swagger UI）：http://localhost:8000/docs
 | 端点 | 方法 | 用途 |
 |---|---|---|
 | `/health` | GET | 健康检查 |
-| `/forecast/run` | POST | 阻塞式跑完返回最终摘要（CI/自动化） |
-| `/forecast/stream` | POST | SSE 流式，每个工具调用/返回都推一条事件 |
+| `/runs` | POST | 创建并启动交互式运行 |
+| `/runs/{thread_id}` | GET | 获取当前会话快照 |
+| `/runs/{thread_id}/events` | GET | SSE 订阅结构化事件流 |
+| `/runs/{thread_id}/approve` | POST | 提交人工审批 |
+| `/runs/{thread_id}/feedback` | POST | 提交自然语言反馈/暂停/继续/重规划指令 |
+| `/runs/{thread_id}/resume` | POST | 恢复等待中的运行 |
+| `/runs/{thread_id}/cancel` | POST | 终止运行 |
+| `/forecast/run` | POST | 兼容旧版：阻塞式跑完返回摘要 |
+| `/forecast/stream` | POST | 兼容旧版：旧 SSE 消息流 |
 
 ## License
 

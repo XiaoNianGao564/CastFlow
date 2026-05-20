@@ -32,6 +32,7 @@ full = [
     "streamlit>=1.40.0",
     "mcp>=1.0.0",
     "langchain-mcp-adapters>=0.1.0",
+    "langgraph-checkpoint-sqlite>=2.0.0",
 ]
 
 [build-system]

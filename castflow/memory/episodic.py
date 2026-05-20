@@ -55,6 +55,9 @@ class EpisodicMemory:
         model: str,
         mape: float,
         best_code: str,
+        candidate_summaries: str | None = None,
+        validation_mape: float | None = None,
+        selection_reason: str | None = None,
     ) -> str:
         if not self.available:
             return ""
@@ -62,7 +65,9 @@ class EpisodicMemory:
         # 用于检索的文本：组合 org + profile + model 让相似数据特征能召回
         doc = (
             f"区县={org}; 目标月={target_month}; 模型={model}; "
-            f"MAPE={mape:.2f}; 数据特征={data_profile}"
+            f"MAPE={mape:.2f}; validation_mape={validation_mape}; "
+            f"selection={selection_reason or ''}; 数据特征={data_profile}; "
+            f"候选摘要={candidate_summaries or ''}"
         )
         try:
             self._col.add(
@@ -74,6 +79,9 @@ class EpisodicMemory:
                         "target_month": target_month,
                         "model": model,
                         "mape": float(mape),
+                        "validation_mape": float(validation_mape) if validation_mape is not None else None,
+                        "selection_reason": selection_reason or "",
+                        "candidate_summaries": (candidate_summaries or "")[:1000],
                         "best_code_len": len(best_code or ""),
                         "best_code_preview": (best_code or "")[:500],
                     }
@@ -106,6 +114,9 @@ class EpisodicMemory:
                     "org": meta.get("org"),
                     "model": meta.get("model"),
                     "mape": meta.get("mape"),
+                    "validation_mape": meta.get("validation_mape"),
+                    "selection_reason": meta.get("selection_reason"),
+                    "candidate_summaries": meta.get("candidate_summaries"),
                     "code_preview": meta.get("best_code_preview"),
                 }
             )

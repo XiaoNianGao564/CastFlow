@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -36,6 +37,18 @@ from eval.judges.mape_judge import mape_judge
 
 console = Console(legacy_windows=False, force_terminal=True)
 CASES_DIR = Path(__file__).resolve().parent / "cases"
+
+
+def _parse_tool_payload(content) -> dict:
+    if isinstance(content, dict):
+        return content
+    if not isinstance(content, str):
+        return {}
+    try:
+        parsed = json.loads(content)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        return {}
 
 
 def load_cases(name_filter: Optional[str] = None) -> list[dict]:
@@ -97,20 +110,33 @@ def run_one(case: dict) -> dict:
                     if isinstance(val, (int, float)):
                         finalize_mape = float(val)
         elif mtype == "tool" and getattr(m, "name", None) == "evaluate_mape":
-            content = str(getattr(m, "content", ""))
-            mt = re.search(r'"mape"\s*:\s*([\d.]+)', content)
-            if mt:
+            payload = _parse_tool_payload(getattr(m, "content", ""))
+            data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+            val = data.get("mape") if isinstance(data, dict) else None
+            if isinstance(val, (int, float)):
+                mape = float(val)
+            elif isinstance(val, str):
                 try:
-                    mape = float(mt.group(1))
+                    mape = float(val)
                 except ValueError:
                     pass
+            if mape is None:
+                content = str(getattr(m, "content", ""))
+                mt = re.search(r'"mape"\s*:\s*([\d.]+)', content)
+                if mt:
+                    try:
+                        mape = float(mt.group(1))
+                    except ValueError:
+                        pass
 
     actual_mape = mape if mape is not None else finalize_mape
+    memory_enabled = os.environ.get("CASTFLOW_EVAL_MEMORY_ABLATION", "0") != "1"
     return {
         "case": case["_name"],
         "actual_mape": actual_mape,
         "tool_seq": tool_seq,
         "elapsed_sec": round(elapsed, 1),
+        "memory_enabled": memory_enabled,
     }
 
 
@@ -128,7 +154,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--case", help="只跑名字含此关键字的 case")
     parser.add_argument("--no-llm-judge", action="store_true")
+    parser.add_argument("--memory-off", action="store_true", help="关闭 memory 召回，用于 ablation 对比")
     args = parser.parse_args()
+    if args.memory_off:
+        os.environ["CASTFLOW_EVAL_MEMORY_ABLATION"] = "1"
 
     cases = load_cases(args.case)
     if not cases:
@@ -144,6 +173,7 @@ def main() -> None:
     table.add_column("LLM judge (workflow/recovery/memory)", justify="center")
     table.add_column("Tools", overflow="fold")
     table.add_column("Time", justify="right")
+    table.add_column("Memory", justify="center")
 
     pass_count = 0
     rows: list[dict] = []
@@ -174,6 +204,7 @@ def main() -> None:
             wcr,
             ", ".join(dict.fromkeys(result["tool_seq"])),  # 去重保序
             f"{result['elapsed_sec']}s",
+            "on" if result["memory_enabled"] else "off",
         )
 
     console.print(table)
